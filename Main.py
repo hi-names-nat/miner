@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
-import pandas
 from IPython.display import display
+import pandas
 import Forest
 
 # Global variables to drive stuff - not good practice but this is my code dangit

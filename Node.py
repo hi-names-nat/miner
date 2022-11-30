@@ -1,7 +1,7 @@
 import numpy as np
+from IPython.display import display
 import pandas
 import Main
-from IPython.display import display
 
 
 # Node tree class, used for the BTree
@@ -136,7 +136,9 @@ class BTreeNode:
             root = self
             while root.left is not None and root.right is not None:
 
-                pivot = mReadableData.iloc[i, root.pivot]
+                p = mReadableData.iloc[i]
+                pivot = p.loc[self.pivot]
+
 
                 if pivot == 1:
                     root = root.right
@@ -169,7 +171,10 @@ class BTreeNode:
         display(b.outOfBag)
 
         sqrtn = int(np.sqrt(len(b.data.columns)))
-        samples = b.data.sample(n=sqrtn, replace=False, axis='columns')
+        d = b.data.iloc[:, 0]
+        s = b.data.drop(columns='Unnamed: 0')
+        samples: pandas.DataFrame = s.sample(n=sqrtn, replace=False, axis='columns')
+        samples.insert(0, column='Cancerous', value=d)
 
         print("\n\nRoot:")
 

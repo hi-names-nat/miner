@@ -1,19 +1,23 @@
+import numpy as np
 import Main
 import pandas
-import numpy as np
 
 
-def findMaxPhi(mReadableData):
+def findMaxPhi(mReadableData: pandas.DataFrame):
     maxDict = list()
+
+    cleanedValues = mReadableData.loc[~mReadableData.index.duplicated(), :].copy()
 
     numSamples = len(mReadableData.index)
 
     if (Main.DEBUG):
         print("numsamples: " + str(numSamples))
 
-    for j in range(0, len(mReadableData.columns), 1):
-        sam = mReadableData.columns[j]
+    for j in mReadableData.columns:
+        if j == 'Cancerous':
+            continue
         # right is positive
+        n: pandas.DataFrame = cleanedValues.loc[:, j]
 
         NumSamplesR = 0
         NumSamplesL = 0
@@ -22,12 +26,14 @@ def findMaxPhi(mReadableData):
         PosSamplesR = 0
         NegSamplesR = 0
 
-        for i in range(0, len(mReadableData.index), 1):
-            if (mReadableData.iloc[i, j] == 1):  # right
+        for i in cleanedValues.index:
+            t = n.loc[i]
+            if t == 1:  # right
 
                 NumSamplesR = NumSamplesR + 1
 
-                if (mReadableData.iloc[i, 0] == 1):
+                t = cleanedValues.loc[i]
+                if t.loc['Cancerous'] == 1:
                     PosSamplesR = PosSamplesR + 1
                 else:
                     NegSamplesR = NegSamplesR + 1
@@ -35,7 +41,8 @@ def findMaxPhi(mReadableData):
 
                 NumSamplesL = NumSamplesL + 1
 
-                if (mReadableData.iloc[i, 0] == 1):
+                t = cleanedValues.loc[i]
+                if t.iloc[0] == 1:
                     PosSamplesL = PosSamplesL + 1
                 else:
                     NegSamplesL = NegSamplesL + 1
@@ -49,10 +56,10 @@ def findMaxPhi(mReadableData):
         Q = np.abs(PPosL - PPosR) + np.abs(PNegL - PNegR)
         Phi = (2 * PL * PR) * Q
         maxDict.append(
-            [j, sam, NumSamplesL, NumSamplesR, PosSamplesL, NegSamplesL, PL, PR, PNegL, PPosL, PPosR, PNegR,
+            [j, NumSamplesL, NumSamplesR, PosSamplesL, NegSamplesL, PL, PR, PNegL, PPosL, PPosR, PNegR,
              (2 * PL * PR), Q, Phi])
 
-    maxDict.sort(key=lambda x: x[14])
+    maxDict.sort(key=lambda x: x[13])
     maxDict.reverse()
 
     return maxDict
