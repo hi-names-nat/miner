@@ -1,12 +1,16 @@
+import numpy as np
 import pandas
-import Trees
+import Main
+from IPython.display import display
+
 
 # Node tree class, used for the BTree
 class BTreeNode:
     def __init__(self):
         self.right: BTreeNode = None
         self.left: BTreeNode = None
-        self.data = None
+        self.data: pandas.DataFrame = None
+        self.outOfBag: pandas.DataFrame = None
         self.pivot: int = None
         self.moreOf: int = None
 
@@ -25,7 +29,7 @@ class BTreeNode:
         return confusionmatrix
 
     # walk the list and get all values
-    def __FindPosNeg(self, isRight : bool):  # return a tuple [TP, FP, TN, FN]
+    def __FindPosNeg(self, isRight: bool):  # return a tuple [TP, FP, TN, FN]
         returnTuple = [0, 0, 0, 0]
         print("\nFindPosNeg\n")
         if self.left is None and self.right is None:  # get the actual values
@@ -153,27 +157,93 @@ class BTreeNode:
 
         return returnTuple
 
+    def GenerateTreeSqrt(mReadableData: pandas.DataFrame, method):
+        b = BTreeNode()
+        b.pivot = -1
 
+        b.data = mReadableData.sample(frac=1, replace=True)
+        print("Bag:")
+        display(b.data)
+        b.outOfBag = mReadableData.merge(b.data, how='outer', indicator=True).loc[lambda x: x['_merge'] == 'left_only']
+        print("OOB:")
+        display(b.outOfBag)
 
+        sqrtn = int(np.sqrt(len(b.data.columns)))
+        samples = b.data.sample(n=sqrtn, replace=False, axis='columns')
 
-class BTreeForest:
+        print("\n\nRoot:")
 
-    def __init__(self):
-        trees: list = list()
-        numtrees: int
-        treedepth: int
+        idx = method(samples)
 
-    def newInstance(numTrees: int, treeDepth: int, treeNum: int, data):
-        self = BTreeForest()
-        self.numtrees = numTrees
-        self.treedepth = treeDepth
-        self.trees = list()
+        b.data = samples
+        b.GenerateNodes(idx[0][0])
+        b.pivot = idx[0][0]
 
-        for i in range(0, treeNum, 1):
-            self.trees[i] = Trees.GenerateTree(data, Trees.findMaxPhi)
+        print("\n\nLeft: ")
+        sqrtn = int(np.sqrt(len(b.left.data)))
 
+        # sampling from the sorted dataset
+        samples = b.left.data.sample(n=sqrtn, replace=False, axis='columns')
 
+        maxL = method(samples)
+        i = 0
 
+        for i in range(0, len(maxL), 1):
+            if maxL[i][0] != b.pivot:
+                found = i
+                break
 
+        b.left.GenerateNodes(maxL[i][0])
+        b.left.pivot = maxL[i][0]
+        print("left Chose pivot of " + str(maxL[i]))
 
+        print("\n\nRight: ")
 
+        sqrtn = int(np.sqrt(len(b.right.data)))
+
+        # sampling from the sorted dataset
+        samples = b.right.data.sample(n=sqrtn, replace=False, axis='columns')
+
+        maxR = method(samples)
+        found = 0
+
+        for i in range(0, len(maxR), 1):
+            if maxR[i][0] != b.pivot:
+                found = i
+                break
+        b.right.GenerateNodes(maxR[found][0])
+        b.right.pivot = maxR[found][0]
+        print("right Chose pivot of " + str(maxR[found]))
+
+        return b
+
+    def GenerateNodes(self, idx):
+        b2 = BTreeNode()
+        b3 = BTreeNode()
+
+        d = self.data
+
+        PositiveIndexes = list()
+        NegativeIndexes = list()
+
+        for i in range(0, len(d.index), 1):
+            if d.iloc[i, idx] == 0:
+                NegativeIndexes.append(d.index[i])
+            else:
+                PositiveIndexes.append(d.index[i])
+        PositiveIndexes = list(dict.fromkeys(PositiveIndexes))
+        NegativeIndexes = list(dict.fromkeys(NegativeIndexes))
+
+        b2.data = d.loc[NegativeIndexes]
+        b2.pivot = idx
+        b3.data = d.loc[PositiveIndexes]
+        b3.pivot = idx
+
+        self.left = b2
+        self.right = b3
+
+        if Main.DEBUG == 1:
+            print("left:")
+            display(b2.data)
+            print("right:")
+            display(b3.data)
