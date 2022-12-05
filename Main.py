@@ -1,5 +1,7 @@
 import matplotlib.pyplot as plt
 from IPython.display import display
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
 import pandas
 import Forest
 
@@ -83,7 +85,7 @@ if __name__ == '__main__':
     mReadableData = MakeMachineReadable(data)
 
     # sets created.
-    btf = Forest.BTreeForest.newInstance(10, 2, mReadableData)
+    btf: Forest.BTreeForest = Forest.BTreeForest.newInstance(10, 2, mReadableData)
 
     data1 = data.loc[[0]]
     data2 = data.loc[[14]]
@@ -102,29 +104,5 @@ if __name__ == '__main__':
     print("NC15")
     btf.evalSample(data5)
 
-    #print("Out of bag:")
-    #dtd = data.loc[[sampleLoc]]
-    #for i in range(len(outOfBag.index)):
-    #    dt = outOfBag.iloc[[i]]
-
-    #    t = btf.evalSample(dt)
-
-    #    returnTuple = [0, 0, 0, 0]
-    #    c = mReadableData.iloc[sampleLoc, 0]
-
-    #    if c == 1:
-    #        if c == t:
-    #            returnTuple[0] = returnTuple[0] + 1
-    #        else:
-    #            returnTuple[3] = returnTuple[3] + 1
-    #    else:
-    #        if c != t:
-    #            returnTuple[1] = returnTuple[1] + 1
-    #        else:
-    #            returnTuple[2] = returnTuple[2] + 1
-
-    #    print("Found Positive:")
-    #    print(t)
-    #    print("TP / FP / TN / FN")
-    #    print(returnTuple)
-    #    EvalMethod(returnTuple, "forest")
+    print("Out of bag:")
+    EvalMethod(btf.evalOOB(), 'Out of Bag')

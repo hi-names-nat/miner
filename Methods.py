@@ -14,7 +14,7 @@ def findMaxPhi(mReadableData: pandas.DataFrame):
         print("numsamples: " + str(numSamples))
 
     for j in mReadableData.columns:
-        if j == 'Cancerous':
+        if j == 'Cancerous' or j == 'Unnamed: 0':
             continue
         # right is positive
         n: pandas.DataFrame = cleanedValues.loc[:, j]
@@ -33,7 +33,7 @@ def findMaxPhi(mReadableData: pandas.DataFrame):
                 NumSamplesR = NumSamplesR + 1
 
                 t = cleanedValues.loc[i]
-                if t.loc['Cancerous'] == 1:
+                if t.iloc[0] == 1:
                     PosSamplesR = PosSamplesR + 1
                 else:
                     NegSamplesR = NegSamplesR + 1

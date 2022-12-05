@@ -171,31 +171,35 @@ class BTreeNode:
         display(b.outOfBag)
 
         sqrtn = int(np.sqrt(len(b.data.columns)))
-        d = b.data.iloc[:, 0]
+        trueValues = b.data.loc[:, 'Unnamed: 0']
         s = b.data.drop(columns='Unnamed: 0')
         samples: pandas.DataFrame = s.sample(n=sqrtn, replace=False, axis='columns')
-        samples.insert(0, column='Cancerous', value=d)
+        samples.insert(0, column='Unnamed: 0', value=trueValues)
 
         print("\n\nRoot:")
 
         idx = method(samples)
 
-        b.data = samples
         b.GenerateNodes(idx[0][0])
         b.pivot = idx[0][0]
+        print("Root chose pivot of " + str(idx[0]))
+
 
         print("\n\nLeft: ")
         sqrtn = int(np.sqrt(len(b.left.data)))
 
         # sampling from the sorted dataset
-        samples = b.left.data.sample(n=sqrtn, replace=False, axis='columns')
+        sqrtn = int(np.sqrt(len(b.left.data.columns)))
+        trueValues = b.left.data.loc[:, 'Unnamed: 0']
+        s = b.left.data.drop(columns='Unnamed: 0')
+        samples: pandas.DataFrame = s.sample(n=sqrtn, replace=False, axis='columns')
+        samples.insert(0, column='Unnamed: 0', value=trueValues)
 
         maxL = method(samples)
         i = 0
 
         for i in range(0, len(maxL), 1):
             if maxL[i][0] != b.pivot:
-                found = i
                 break
 
         b.left.GenerateNodes(maxL[i][0])
@@ -204,21 +208,26 @@ class BTreeNode:
 
         print("\n\nRight: ")
 
-        sqrtn = int(np.sqrt(len(b.right.data)))
-
         # sampling from the sorted dataset
-        samples = b.right.data.sample(n=sqrtn, replace=False, axis='columns')
+
+        sqrtn = int(np.sqrt(len(b.right.data.columns)))
+        trueValues = b.right.data.loc[:, 'Unnamed: 0']
+        s = b.right.data.drop(columns='Unnamed: 0')
+        samples: pandas.DataFrame = s.sample(n=sqrtn, replace=False, axis='columns')
+        samples.insert(0, column='Unnamed: 0', value=trueValues)
+
 
         maxR = method(samples)
-        found = 0
+        i = 0
 
         for i in range(0, len(maxR), 1):
             if maxR[i][0] != b.pivot:
-                found = i
                 break
-        b.right.GenerateNodes(maxR[found][0])
-        b.right.pivot = maxR[found][0]
-        print("right Chose pivot of " + str(maxR[found]))
+        b.right.GenerateNodes(maxR[i][0])
+        b.right.pivot = maxR[i][0]
+        print("right Chose pivot of " + str(maxR[i]))
+
+        b.PopulateMoreRoots()
 
         return b
 
@@ -226,23 +235,21 @@ class BTreeNode:
         b2 = BTreeNode()
         b3 = BTreeNode()
 
-        d = self.data
+        d = self.data.loc[~self.data.index.duplicated(), :].copy()
 
         PositiveIndexes = list()
         NegativeIndexes = list()
 
-        for i in range(0, len(d.index), 1):
-            if d.iloc[i, idx] == 0:
-                NegativeIndexes.append(d.index[i])
+        for i in d.index:
+            if d.loc[i, idx] == 0:
+                NegativeIndexes.append(i)
             else:
-                PositiveIndexes.append(d.index[i])
-        PositiveIndexes = list(dict.fromkeys(PositiveIndexes))
-        NegativeIndexes = list(dict.fromkeys(NegativeIndexes))
+                PositiveIndexes.append(i)
 
         b2.data = d.loc[NegativeIndexes]
-        b2.pivot = idx
+        b2.pivot = -1
         b3.data = d.loc[PositiveIndexes]
-        b3.pivot = idx
+        b3.pivot = -1
 
         self.left = b2
         self.right = b3

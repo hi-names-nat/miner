@@ -39,3 +39,15 @@ class BTreeForest:
             return True
         else:
             return False
+
+    def evalOOB(self):
+        samples = [0, 0, 0, 0]  # [TP, FP, TN, FN]
+
+        for tree in self.trees:
+            t = tree.MakePhiConfusion(tree.outOfBag)
+            samples[0] = samples[0] + t[0]
+            samples[1] = samples[1] + t[1]
+            samples[2] = samples[2] + t[2]
+            samples[3] = samples[3] + t[3]
+
+        return samples
